@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turn your logo white</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: "Roboto Mono", sans-serif;
+            color: #333333;
+            background-color: #f8f8f8;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 2.0em;
+            margin-bottom: 0.5em;
+        }
+        ::selection {
+            background: #F9E400;
+            color: #7C00FE;
+        }
+        p {
+            font-size: 1.0em;
+            line-height: 1.8;
+            margin: 1em 0;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            font-family: "Roboto Mono", sans-serif;
+        }
+        button {
+            background-color: #F9E400;
+            color: #7C00FE;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+        button:hover {
+            background-color: #d8c800;
+        }
+        .upload-area {
+            width: 100%;
+            max-width: 500px;
+            height: 200px;
+            border: 2px dashed #F9E400;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+            cursor: pointer;
+            background-color: #f0f0f0;
+        }
+        .upload-area:hover {
+            border-color: #66BB6A;
+        }
+        #output-image {
+            display: block;
+            margin: 20px auto;
+            max-width: 40%; /* Adjust the size to fit smaller screens */
+            height: auto;
+        }
+    </style>
+
+</head>
+<body>
+
+    <h1>Turn Your Logo White</h1>
+    <p>Drag, upload or paste your logo in PNG (make sure the background is transparent) and turn it all white. Useful for slide decks, websites, marketing content and other things.</p>
+    <br>
+    <p>Put together by <a href="https://www.linkedin.com/in/phanosha/" target="_blank">Phanos Hadjikyriakou</a>.</p>
+    <br>
+
+    <!-- Drag and drop upload area -->
+    <div class="upload-area" id="upload-area">
+        Drag & Drop, Click, or Paste an Image Here
+    </div>
+
+    <!-- Hidden file input for regular upload -->
+    <input type="file" id="file-input" style="display: none;">
+
+    <!-- Canvas for processing the image -->
+    <canvas id="canvas" style="display: none;"></canvas>
+
+    <!-- Processed image output -->
+    <img id="output-image">
+
+    <!-- Download button (initially hidden) -->
+    <button id="download-btn" style="display: none;">Download Image</button>
+
+    <script>
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const outputImage = document.getElementById('output-image');
+        const downloadBtn = document.getElementById('download-btn');
+
+        // Handle drag and drop events
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#66BB6A';
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#F9E400';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#F9E400';
+            handleFileUpload(e.dataTransfer.files[0]);
+        });
+
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', () => {
+            handleFileUpload(fileInput.files[0]);
+        });
+
+        // Handle image paste
+        document.addEventListener('paste', (e) => {
+            const items = e.clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const blob = items[i].getAsFile();
+                    handleFileUpload(blob);
+                }
+            }
+        });
+
+        function handleFileUpload(file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    // Draw image on canvas
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+
+                    // Process the image
+                    processImage();
+
+                    // Display the processed image
+                    outputImage.src = canvas.toDataURL();
+                    outputImage.style.display = 'block';
+                    downloadBtn.style.display = 'inline-block'; // Show the download button
+                }
+                img.src = event.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function processImage() {
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imgData.data;
+
+            // Loop over every pixel and change non-white pixels to white
+            for (let i = 0; i < pixels.length; i += 4) {
+                const r = pixels[i];     // Red
+                const g = pixels[i + 1]; // Green
+                const b = pixels[i + 2]; // Blue
+                const a = pixels[i + 3]; // Alpha
+
+                // Change non-white pixels to white (255, 255, 255)
+                if (r !== 255 || g !== 255 || b !== 255) {
+                    pixels[i] = 255;   // Red
+                    pixels[i + 1] = 255; // Green
+                    pixels[i + 2] = 255; // Blue
+                }
+            }
+
+            // Put the modified data back to the canvas
+            ctx.putImageData(imgData, 0, 0);
+        }
+
+        // Download processed image
+        downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL();
+            link.download = 'processed_image.png';
+            link.click();
+        });
+    </script>
+
+</body>
+</html>
