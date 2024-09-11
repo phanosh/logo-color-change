@@ -11,4 +11,4 @@ This is a simple web page where you can drag, upload, or paste your logo in PNG 
 
 ## Getting Started
 
-To use this tool, visit phanosha.com/whitelogo
+To use this tool, visit [phanosha.com/logo-color-change](http://phanosha.com/logo-color-change/)
